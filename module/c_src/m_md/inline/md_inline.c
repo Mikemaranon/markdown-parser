@@ -76,27 +76,15 @@ MarkdownTransformerStatus md_inline_transform_range(
                     return status;
                 }
 
-                status = md_shared_append_open_tag_with_attrs(
-                    builder,
-                    "strong",
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL,
-                    0
+                status = md_shared_status_from_html_builder(
+                    html_builder_open_inline_tag(builder, "strong")
                 );
                 if (status != MARKDOWN_TRANSFORMER_OK) {
                     return status;
                 }
 
-                status = md_shared_append_open_tag_with_attrs(
-                    builder,
-                    "em",
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL,
-                    0
+                status = md_shared_status_from_html_builder(
+                    html_builder_open_inline_tag(builder, "em")
                 );
                 if (status != MARKDOWN_TRANSFORMER_OK) {
                     return status;
@@ -111,12 +99,16 @@ MarkdownTransformerStatus md_inline_transform_range(
                     return status;
                 }
 
-                status = md_shared_append_closing_tag(builder, "em");
+                status = md_shared_status_from_html_builder(
+                    html_builder_close_inline_tag(builder, "em")
+                );
                 if (status != MARKDOWN_TRANSFORMER_OK) {
                     return status;
                 }
 
-                status = md_shared_append_closing_tag(builder, "strong");
+                status = md_shared_status_from_html_builder(
+                    html_builder_close_inline_tag(builder, "strong")
+                );
                 if (status != MARKDOWN_TRANSFORMER_OK) {
                     return status;
                 }
@@ -136,27 +128,15 @@ MarkdownTransformerStatus md_inline_transform_range(
                     return status;
                 }
 
-                status = md_shared_append_open_tag_with_attrs(
-                    builder,
-                    "strong",
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL,
-                    0
+                status = md_shared_status_from_html_builder(
+                    html_builder_open_inline_tag(builder, "strong")
                 );
                 if (status != MARKDOWN_TRANSFORMER_OK) {
                     return status;
                 }
 
-                status = md_shared_append_open_tag_with_attrs(
-                    builder,
-                    "em",
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL,
-                    0
+                status = md_shared_status_from_html_builder(
+                    html_builder_open_inline_tag(builder, "em")
                 );
                 if (status != MARKDOWN_TRANSFORMER_OK) {
                     return status;
@@ -171,12 +151,16 @@ MarkdownTransformerStatus md_inline_transform_range(
                     return status;
                 }
 
-                status = md_shared_append_closing_tag(builder, "em");
+                status = md_shared_status_from_html_builder(
+                    html_builder_close_inline_tag(builder, "em")
+                );
                 if (status != MARKDOWN_TRANSFORMER_OK) {
                     return status;
                 }
 
-                status = md_shared_append_closing_tag(builder, "strong");
+                status = md_shared_status_from_html_builder(
+                    html_builder_close_inline_tag(builder, "strong")
+                );
                 if (status != MARKDOWN_TRANSFORMER_OK) {
                     return status;
                 }
@@ -592,6 +576,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         if (md_inline_try_parse_auto_url(cursor, text_end, &auto_url_end)) {
             char* href_copy;
             char* text_copy;
+            HtmlBuilderStatus builder_status;
 
             status = md_shared_flush_plain_text(builder, plain_start, cursor);
             if (status != MARKDOWN_TRANSFORMER_OK) {
@@ -615,27 +600,17 @@ MarkdownTransformerStatus md_inline_transform_range(
                 return MARKDOWN_TRANSFORMER_ERROR_ALLOCATION_FAILED;
             }
 
-            status = md_shared_append_open_tag_with_attrs(
+            builder_status = html_builder_append_link(
                 builder,
-                "a",
-                "href",
                 href_copy,
                 NULL,
-                NULL,
-                0
+                text_copy
             );
-            if (status == MARKDOWN_TRANSFORMER_OK) {
-                status = md_shared_status_from_html_builder(
-                    html_builder_append_escaped(builder, text_copy)
-                );
-            }
-            if (status == MARKDOWN_TRANSFORMER_OK) {
-                status = md_shared_append_closing_tag(builder, "a");
-            }
 
             free(href_copy);
             free(text_copy);
 
+            status = md_shared_status_from_html_builder(builder_status);
             if (status != MARKDOWN_TRANSFORMER_OK) {
                 return status;
             }

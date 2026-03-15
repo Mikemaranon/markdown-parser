@@ -57,23 +57,6 @@ MarkdownTransformerStatus md_shared_append_escaped_range(
     size_t length
 );
 
-// Appends an opening HTML tag with up to two attributes.
-MarkdownTransformerStatus md_shared_append_open_tag_with_attrs(
-    HtmlBuilder* builder,
-    const char* tag_name,
-    const char* attribute_name_a,
-    const char* attribute_value_a,
-    const char* attribute_name_b,
-    const char* attribute_value_b,
-    int self_closing
-);
-
-// Appends a closing HTML tag.
-MarkdownTransformerStatus md_shared_append_closing_tag(
-    HtmlBuilder* builder,
-    const char* tag_name
-);
-
 // Flushes a plain text range as escaped HTML.
 MarkdownTransformerStatus md_shared_flush_plain_text(
     HtmlBuilder* builder,

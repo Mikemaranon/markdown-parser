@@ -12,7 +12,6 @@ MarkdownTransformerStatus md_blocks_append_heading(
     size_t content_length,
     size_t heading_level
 ) {
-    char tag_name[4];
     char* content_copy;
     HtmlBuilderStatus builder_status;
     MarkdownTransformerStatus status;
@@ -25,11 +24,6 @@ MarkdownTransformerStatus md_blocks_append_heading(
         return MARKDOWN_TRANSFORMER_ERROR_TRANSFORM_FAILED;
     }
 
-    tag_name[0] = 'h';
-    tag_name[1] = (char)('0' + heading_level);
-    tag_name[2] = '\0';
-    tag_name[3] = '\0';
-
     content_copy = md_shared_copy_range(content_start, content_length);
     if (content_copy == NULL) {
         return MARKDOWN_TRANSFORMER_ERROR_ALLOCATION_FAILED;
@@ -41,7 +35,7 @@ MarkdownTransformerStatus md_blocks_append_heading(
         return md_shared_status_from_html_builder(builder_status);
     }
 
-    builder_status = html_builder_open_tag(builder, tag_name);
+    builder_status = html_builder_open_heading(builder, heading_level);
     if (builder_status != HTML_BUILDER_OK) {
         free(content_copy);
         return md_shared_status_from_html_builder(builder_status);
@@ -53,7 +47,7 @@ MarkdownTransformerStatus md_blocks_append_heading(
         return status;
     }
 
-    builder_status = html_builder_close_tag(builder, tag_name);
+    builder_status = html_builder_close_heading(builder, heading_level);
     if (builder_status != HTML_BUILDER_OK) {
         free(content_copy);
         return md_shared_status_from_html_builder(builder_status);
@@ -90,7 +84,7 @@ MarkdownTransformerStatus md_blocks_append_paragraph(
         return md_shared_status_from_html_builder(builder_status);
     }
 
-    builder_status = html_builder_open_tag(builder, "p");
+    builder_status = html_builder_open_paragraph(builder);
     if (builder_status != HTML_BUILDER_OK) {
         free(content_copy);
         return md_shared_status_from_html_builder(builder_status);
@@ -102,7 +96,7 @@ MarkdownTransformerStatus md_blocks_append_paragraph(
         return status;
     }
 
-    builder_status = html_builder_close_tag(builder, "p");
+    builder_status = html_builder_close_paragraph(builder);
     if (builder_status != HTML_BUILDER_OK) {
         free(content_copy);
         return md_shared_status_from_html_builder(builder_status);

@@ -23,6 +23,13 @@ target_include_directories(markdown_parser
         ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src
         ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_str
         ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_html
+        ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_html/core
+        ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_html/escape
+        ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_html/attrs
+        ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_html/tags
+        ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_html/blocks
+        ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_html/inline
+        ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_html/elements
         ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_md
         ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_md/shared
         ${CMAKE_CURRENT_SOURCE_DIR}/../module/c_src/m_md/blocks

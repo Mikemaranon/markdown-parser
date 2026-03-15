@@ -69,31 +69,48 @@ int md_shared_is_email_char(char character) {
         character == '_' ||
         character == '%' ||
         character == '+' ||
-        character == '-'
+        character == '-' ||
+        character == '@'
     );
 }
 
 // Returns whether the provided character is safe inside an automatic URL.
 int md_shared_is_safe_url_char(char character) {
     return (
-        character != '\0' &&
-        character != ' ' &&
-        character != '\t' &&
-        character != '\r' &&
-        character != '\n' &&
-        character != '<' &&
-        character != '>'
+        (character >= 'a' && character <= 'z') ||
+        (character >= 'A' && character <= 'Z') ||
+        (character >= '0' && character <= '9') ||
+        character == ':' ||
+        character == '/' ||
+        character == '.' ||
+        character == '?' ||
+        character == '#' ||
+        character == '&' ||
+        character == '%' ||
+        character == '=' ||
+        character == '_' ||
+        character == '-' ||
+        character == '~' ||
+        character == '+' ||
+        character == '@' ||
+        character == '!' ||
+        character == '$' ||
+        character == '\'' ||
+        character == '(' ||
+        character == ')' ||
+        character == '*' ||
+        character == ',' ||
+        character == ';'
     );
 }
 
 // Returns whether the provided character is a valid automatic URL boundary.
 int md_shared_is_auto_url_boundary(char character) {
     return (
-        character == '\0' ||
         character == ' ' ||
         character == '\t' ||
-        character == '\r' ||
         character == '\n' ||
+        character == '\r' ||
         character == '<' ||
         character == '>' ||
         character == '"' ||
@@ -107,6 +124,7 @@ const char* md_shared_find_closing_delimiter(
     const char* delimiter
 ) {
     size_t delimiter_length;
+    const char* cursor;
 
     if (start == NULL || delimiter == NULL) {
         return NULL;
@@ -117,17 +135,18 @@ const char* md_shared_find_closing_delimiter(
         return NULL;
     }
 
-    while (*start != '\0') {
-        if (*start == '\\' && start[1] != '\0') {
-            start += 2;
+    cursor = start;
+    while (*cursor != '\0') {
+        if (*cursor == '\\' && *(cursor + 1) != '\0') {
+            cursor += 2;
             continue;
         }
 
-        if (strncmp(start, delimiter, delimiter_length) == 0) {
-            return start;
+        if (strncmp(cursor, delimiter, delimiter_length) == 0) {
+            return cursor;
         }
 
-        start++;
+        cursor++;
     }
 
     return NULL;
@@ -138,21 +157,24 @@ const char* md_shared_find_matching_char(
     const char* start,
     char target
 ) {
+    const char* cursor;
+
     if (start == NULL) {
         return NULL;
     }
 
-    while (*start != '\0') {
-        if (*start == '\\' && start[1] != '\0') {
-            start += 2;
+    cursor = start;
+    while (*cursor != '\0') {
+        if (*cursor == '\\' && *(cursor + 1) != '\0') {
+            cursor += 2;
             continue;
         }
 
-        if (*start == target) {
-            return start;
+        if (*cursor == target) {
+            return cursor;
         }
 
-        start++;
+        cursor++;
     }
 
     return NULL;
@@ -195,140 +217,17 @@ MarkdownTransformerStatus md_shared_append_escaped_range(
     return status;
 }
 
-// Appends an opening HTML tag with up to two attributes.
-MarkdownTransformerStatus md_shared_append_open_tag_with_attrs(
-    HtmlBuilder* builder,
-    const char* tag_name,
-    const char* attribute_name_a,
-    const char* attribute_value_a,
-    const char* attribute_name_b,
-    const char* attribute_value_b,
-    int self_closing
-) {
-    MarkdownTransformerStatus status;
-
-    if (builder == NULL || tag_name == NULL) {
-        return MARKDOWN_TRANSFORMER_ERROR_NULL_ARGUMENT;
-    }
-
-    status = md_shared_append_raw_n(builder, "<", 1);
-    if (status != MARKDOWN_TRANSFORMER_OK) {
-        return status;
-    }
-
-    status = md_shared_append_raw_n(builder, tag_name, strlen(tag_name));
-    if (status != MARKDOWN_TRANSFORMER_OK) {
-        return status;
-    }
-
-    if (attribute_name_a != NULL && attribute_value_a != NULL) {
-        status = md_shared_append_raw_n(builder, " ", 1);
-        if (status != MARKDOWN_TRANSFORMER_OK) {
-            return status;
-        }
-
-        status = md_shared_append_raw_n(
-            builder,
-            attribute_name_a,
-            strlen(attribute_name_a)
-        );
-        if (status != MARKDOWN_TRANSFORMER_OK) {
-            return status;
-        }
-
-        status = md_shared_append_raw_n(builder, "=\"", 2);
-        if (status != MARKDOWN_TRANSFORMER_OK) {
-            return status;
-        }
-
-        status = md_shared_status_from_html_builder(
-            html_builder_append_escaped(builder, attribute_value_a)
-        );
-        if (status != MARKDOWN_TRANSFORMER_OK) {
-            return status;
-        }
-
-        status = md_shared_append_raw_n(builder, "\"", 1);
-        if (status != MARKDOWN_TRANSFORMER_OK) {
-            return status;
-        }
-    }
-
-    if (attribute_name_b != NULL && attribute_value_b != NULL) {
-        status = md_shared_append_raw_n(builder, " ", 1);
-        if (status != MARKDOWN_TRANSFORMER_OK) {
-            return status;
-        }
-
-        status = md_shared_append_raw_n(
-            builder,
-            attribute_name_b,
-            strlen(attribute_name_b)
-        );
-        if (status != MARKDOWN_TRANSFORMER_OK) {
-            return status;
-        }
-
-        status = md_shared_append_raw_n(builder, "=\"", 2);
-        if (status != MARKDOWN_TRANSFORMER_OK) {
-            return status;
-        }
-
-        status = md_shared_status_from_html_builder(
-            html_builder_append_escaped(builder, attribute_value_b)
-        );
-        if (status != MARKDOWN_TRANSFORMER_OK) {
-            return status;
-        }
-
-        status = md_shared_append_raw_n(builder, "\"", 1);
-        if (status != MARKDOWN_TRANSFORMER_OK) {
-            return status;
-        }
-    }
-
-    if (self_closing) {
-        return md_shared_append_raw_n(builder, " />", 3);
-    }
-
-    return md_shared_append_raw_n(builder, ">", 1);
-}
-
-// Appends a closing HTML tag.
-MarkdownTransformerStatus md_shared_append_closing_tag(
-    HtmlBuilder* builder,
-    const char* tag_name
-) {
-    MarkdownTransformerStatus status;
-
-    if (builder == NULL || tag_name == NULL) {
-        return MARKDOWN_TRANSFORMER_ERROR_NULL_ARGUMENT;
-    }
-
-    status = md_shared_append_raw_n(builder, "</", 2);
-    if (status != MARKDOWN_TRANSFORMER_OK) {
-        return status;
-    }
-
-    status = md_shared_append_raw_n(builder, tag_name, strlen(tag_name));
-    if (status != MARKDOWN_TRANSFORMER_OK) {
-        return status;
-    }
-
-    return md_shared_append_raw_n(builder, ">", 1);
-}
-
 // Flushes a plain text range as escaped HTML.
 MarkdownTransformerStatus md_shared_flush_plain_text(
     HtmlBuilder* builder,
     const char* start,
     const char* end
 ) {
-    if (builder == NULL || start == NULL || end == NULL) {
+    if (builder == NULL || start == NULL || end == NULL || end < start) {
         return MARKDOWN_TRANSFORMER_ERROR_NULL_ARGUMENT;
     }
 
-    if (end <= start) {
+    if (start == end) {
         return MARKDOWN_TRANSFORMER_OK;
     }
 

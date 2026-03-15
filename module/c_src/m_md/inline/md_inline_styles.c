@@ -3,7 +3,7 @@
 #include "../shared/md_shared.h"
 #include "md_inline.h"
 
-// Parses a wrapped inline fragment and renders it inside the provided HTML tag.
+// Parses and renders inline content wrapped by a specific HTML tag.
 MarkdownTransformerStatus md_inline_parse_wrapped_inline(
     const char* content_start,
     const char* content_end,
@@ -12,14 +12,8 @@ MarkdownTransformerStatus md_inline_parse_wrapped_inline(
 ) {
     MarkdownTransformerStatus status;
 
-    status = md_shared_append_open_tag_with_attrs(
-        builder,
-        tag_name,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        0
+    status = md_shared_status_from_html_builder(
+        html_builder_open_inline_tag(builder, tag_name)
     );
     if (status != MARKDOWN_TRANSFORMER_OK) {
         return status;
@@ -34,7 +28,9 @@ MarkdownTransformerStatus md_inline_parse_wrapped_inline(
         return status;
     }
 
-    return md_shared_append_closing_tag(builder, tag_name);
+    return md_shared_status_from_html_builder(
+        html_builder_close_inline_tag(builder, tag_name)
+    );
 }
 
 // Parses and renders an inline code span.
@@ -45,14 +41,8 @@ MarkdownTransformerStatus md_inline_parse_code_span(
 ) {
     MarkdownTransformerStatus status;
 
-    status = md_shared_append_open_tag_with_attrs(
-        builder,
-        "code",
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        0
+    status = md_shared_status_from_html_builder(
+        html_builder_open_inline_tag(builder, "code")
     );
     if (status != MARKDOWN_TRANSFORMER_OK) {
         return status;
@@ -67,5 +57,7 @@ MarkdownTransformerStatus md_inline_parse_code_span(
         return status;
     }
 
-    return md_shared_append_closing_tag(builder, "code");
+    return md_shared_status_from_html_builder(
+        html_builder_close_inline_tag(builder, "code")
+    );
 }

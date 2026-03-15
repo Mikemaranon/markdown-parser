@@ -1,81 +1,29 @@
 #include "html_builder.h"
 
-#include <string.h>
-
-static HtmlBuilderStatus html_builder_status_from_string_buffer(
-    StringBufferStatus status
-) {
-    switch (status) {
-        case STRING_BUFFER_OK:
-            return HTML_BUILDER_OK;
-        case STRING_BUFFER_ERROR_NULL_ARGUMENT:
-            return HTML_BUILDER_ERROR_NULL_ARGUMENT;
-        case STRING_BUFFER_ERROR_ALLOCATION_FAILED:
-            return HTML_BUILDER_ERROR_ALLOCATION_FAILED;
-        default:
-            return HTML_BUILDER_ERROR_ALLOCATION_FAILED;
-    }
-}
-
-static HtmlBuilderStatus html_builder_append_escape_sequence(
-    HtmlBuilder* builder,
-    char character
-) {
-    switch (character) {
-        case '&':
-            return html_builder_append_raw(builder, "&amp;");
-        case '<':
-            return html_builder_append_raw(builder, "&lt;");
-        case '>':
-            return html_builder_append_raw(builder, "&gt;");
-        case '"':
-            return html_builder_append_raw(builder, "&quot;");
-        case '\'':
-            return html_builder_append_raw(builder, "&#39;");
-        default:
-            return html_builder_status_from_string_buffer(
-                string_buffer_append_char(&builder->buffer, character)
-            );
-    }
-}
+#include "blocks/html_blocks.h"
+#include "core/html_core.h"
+#include "elements/html_elements.h"
+#include "escape/html_escape.h"
+#include "inline/html_inline.h"
+#include "tags/html_tags.h"
 
 HtmlBuilderStatus html_builder_init(HtmlBuilder* builder) {
-    if (builder == NULL) {
-        return HTML_BUILDER_ERROR_NULL_ARGUMENT;
-    }
-
-    return html_builder_status_from_string_buffer(
-        string_buffer_init(&builder->buffer)
-    );
+    return html_core_init(builder);
 }
 
 void html_builder_free(HtmlBuilder* builder) {
-    if (builder == NULL) {
-        return;
-    }
-
-    string_buffer_free(&builder->buffer);
+    html_core_free(builder);
 }
 
 void html_builder_clear(HtmlBuilder* builder) {
-    if (builder == NULL) {
-        return;
-    }
-
-    string_buffer_clear(&builder->buffer);
+    html_core_clear(builder);
 }
 
 HtmlBuilderStatus html_builder_append_raw(
     HtmlBuilder* builder,
     const char* html
 ) {
-    if (builder == NULL || html == NULL) {
-        return HTML_BUILDER_ERROR_NULL_ARGUMENT;
-    }
-
-    return html_builder_status_from_string_buffer(
-        string_buffer_append(&builder->buffer, html)
-    );
+    return html_core_append_raw(builder, html);
 }
 
 HtmlBuilderStatus html_builder_append_raw_n(
@@ -83,83 +31,83 @@ HtmlBuilderStatus html_builder_append_raw_n(
     const char* html,
     size_t html_length
 ) {
-    if (builder == NULL || html == NULL) {
-        return HTML_BUILDER_ERROR_NULL_ARGUMENT;
-    }
-
-    return html_builder_status_from_string_buffer(
-        string_buffer_append_n(&builder->buffer, html, html_length)
-    );
+    return html_core_append_raw_n(builder, html, html_length);
 }
 
 HtmlBuilderStatus html_builder_append_escaped(
     HtmlBuilder* builder,
     const char* text
 ) {
-    size_t index;
-    size_t text_length;
-    HtmlBuilderStatus status;
+    return html_escape_append_text(builder, text);
+}
 
-    if (builder == NULL || text == NULL) {
-        return HTML_BUILDER_ERROR_NULL_ARGUMENT;
-    }
+HtmlBuilderStatus html_builder_append_newline(HtmlBuilder* builder) {
+    return html_core_append_newline(builder);
+}
 
-    text_length = strlen(text);
-
-    for (index = 0; index < text_length; index++) {
-        status = html_builder_append_escape_sequence(builder, text[index]);
-        if (status != HTML_BUILDER_OK) {
-            return status;
-        }
-    }
-
-    return HTML_BUILDER_OK;
+HtmlBuilderStatus html_builder_append_indent(
+    HtmlBuilder* builder,
+    size_t indent_level
+) {
+    return html_core_append_indent(builder, indent_level);
 }
 
 HtmlBuilderStatus html_builder_open_tag(
     HtmlBuilder* builder,
     const char* tag_name
 ) {
-    HtmlBuilderStatus status;
-
-    if (builder == NULL || tag_name == NULL) {
-        return HTML_BUILDER_ERROR_NULL_ARGUMENT;
-    }
-
-    status = html_builder_append_raw(builder, "<");
-    if (status != HTML_BUILDER_OK) {
-        return status;
-    }
-
-    status = html_builder_append_raw(builder, tag_name);
-    if (status != HTML_BUILDER_OK) {
-        return status;
-    }
-
-    return html_builder_append_raw(builder, ">");
+    return html_tags_open(builder, tag_name);
 }
 
 HtmlBuilderStatus html_builder_close_tag(
     HtmlBuilder* builder,
     const char* tag_name
 ) {
-    HtmlBuilderStatus status;
+    return html_tags_close(builder, tag_name);
+}
 
-    if (builder == NULL || tag_name == NULL) {
-        return HTML_BUILDER_ERROR_NULL_ARGUMENT;
-    }
+HtmlBuilderStatus html_builder_open_tag_with_attributes(
+    HtmlBuilder* builder,
+    const char* tag_name,
+    const char* attribute_name_a,
+    const char* attribute_value_a,
+    const char* attribute_name_b,
+    const char* attribute_value_b,
+    const char* attribute_name_c,
+    const char* attribute_value_c
+) {
+    return html_tags_open_with_attributes(
+        builder,
+        tag_name,
+        attribute_name_a,
+        attribute_value_a,
+        attribute_name_b,
+        attribute_value_b,
+        attribute_name_c,
+        attribute_value_c
+    );
+}
 
-    status = html_builder_append_raw(builder, "</");
-    if (status != HTML_BUILDER_OK) {
-        return status;
-    }
-
-    status = html_builder_append_raw(builder, tag_name);
-    if (status != HTML_BUILDER_OK) {
-        return status;
-    }
-
-    return html_builder_append_raw(builder, ">");
+HtmlBuilderStatus html_builder_append_void_tag_with_attributes(
+    HtmlBuilder* builder,
+    const char* tag_name,
+    const char* attribute_name_a,
+    const char* attribute_value_a,
+    const char* attribute_name_b,
+    const char* attribute_value_b,
+    const char* attribute_name_c,
+    const char* attribute_value_c
+) {
+    return html_tags_append_void_with_attributes(
+        builder,
+        tag_name,
+        attribute_name_a,
+        attribute_value_a,
+        attribute_name_b,
+        attribute_value_b,
+        attribute_name_c,
+        attribute_value_c
+    );
 }
 
 HtmlBuilderStatus html_builder_append_text_element(
@@ -167,69 +115,85 @@ HtmlBuilderStatus html_builder_append_text_element(
     const char* tag_name,
     const char* text_content
 ) {
-    HtmlBuilderStatus status;
+    return html_tags_append_text_element(
+        builder,
+        tag_name,
+        text_content
+    );
+}
 
-    if (builder == NULL || tag_name == NULL || text_content == NULL) {
-        return HTML_BUILDER_ERROR_NULL_ARGUMENT;
-    }
+HtmlBuilderStatus html_builder_open_paragraph(HtmlBuilder* builder) {
+    return html_blocks_open_paragraph(builder);
+}
 
-    status = html_builder_open_tag(builder, tag_name);
-    if (status != HTML_BUILDER_OK) {
-        return status;
-    }
+HtmlBuilderStatus html_builder_close_paragraph(HtmlBuilder* builder) {
+    return html_blocks_close_paragraph(builder);
+}
 
-    status = html_builder_append_escaped(builder, text_content);
-    if (status != HTML_BUILDER_OK) {
-        return status;
-    }
+HtmlBuilderStatus html_builder_open_heading(
+    HtmlBuilder* builder,
+    size_t level
+) {
+    return html_blocks_open_heading(builder, level);
+}
 
-    return html_builder_close_tag(builder, tag_name);
+HtmlBuilderStatus html_builder_close_heading(
+    HtmlBuilder* builder,
+    size_t level
+) {
+    return html_blocks_close_heading(builder, level);
+}
+
+HtmlBuilderStatus html_builder_open_inline_tag(
+    HtmlBuilder* builder,
+    const char* tag_name
+) {
+    return html_inline_open_tag(builder, tag_name);
+}
+
+HtmlBuilderStatus html_builder_close_inline_tag(
+    HtmlBuilder* builder,
+    const char* tag_name
+) {
+    return html_inline_close_tag(builder, tag_name);
+}
+
+HtmlBuilderStatus html_builder_append_link(
+    HtmlBuilder* builder,
+    const char* href,
+    const char* title,
+    const char* label
+) {
+    return html_elements_append_link(builder, href, title, label);
+}
+
+HtmlBuilderStatus html_builder_open_link(
+    HtmlBuilder* builder,
+    const char* href,
+    const char* title
+) {
+    return html_elements_open_link(builder, href, title);
+}
+
+HtmlBuilderStatus html_builder_close_link(HtmlBuilder* builder) {
+    return html_elements_close_link(builder);
+}
+
+HtmlBuilderStatus html_builder_append_image(
+    HtmlBuilder* builder,
+    const char* source,
+    const char* alt,
+    const char* title
+) {
+    return html_elements_append_image(builder, source, alt, title);
 }
 
 const char* html_builder_data(const HtmlBuilder* builder) {
-    if (builder == NULL) {
-        return NULL;
-    }
-
-    return string_buffer_data(&builder->buffer);
+    return html_core_data(builder);
 }
 
 size_t html_builder_length(const HtmlBuilder* builder) {
-    if (builder == NULL) {
-        return 0;
-    }
-
-    return string_buffer_length(&builder->buffer);
-}
-
-
-HtmlBuilderStatus html_builder_append_newline(HtmlBuilder* builder) {
-    if (builder == NULL) {
-        return HTML_BUILDER_ERROR_NULL_ARGUMENT;
-    }
-
-    return html_builder_append_raw(builder, "\n");
-}
-
-HtmlBuilderStatus html_builder_append_indent(
-    HtmlBuilder* builder,
-    size_t indent_level
-) {
-    size_t index;
-    HtmlBuilderStatus status;
-
-    if (builder == NULL) {
-        return HTML_BUILDER_ERROR_NULL_ARGUMENT;
-    }
-
-    for (index = 0; index < indent_level; index++) {
-        status = html_builder_append_raw(builder, "    ");
-        if (status != HTML_BUILDER_OK) {
-            return status;
-        }
-    }
-
-    return HTML_BUILDER_OK;
+    return html_core_length(builder);
 }
 
 HtmlBuilderStatus html_builder_append_block_text_element(
@@ -244,15 +208,15 @@ HtmlBuilderStatus html_builder_append_block_text_element(
         return HTML_BUILDER_ERROR_NULL_ARGUMENT;
     }
 
-    status = html_builder_append_indent(builder, indent_level);
+    status = html_core_append_indent(builder, indent_level);
     if (status != HTML_BUILDER_OK) {
         return status;
     }
 
-    status = html_builder_append_text_element(builder, tag_name, text_content);
+    status = html_tags_append_text_element(builder, tag_name, text_content);
     if (status != HTML_BUILDER_OK) {
         return status;
     }
 
-    return html_builder_append_newline(builder);
+    return html_core_append_newline(builder);
 }

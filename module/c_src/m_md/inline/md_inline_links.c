@@ -40,14 +40,8 @@ MarkdownTransformerStatus md_inline_parse_link(
         }
     }
 
-    status = md_shared_append_open_tag_with_attrs(
-        builder,
-        "a",
-        "href",
-        href_copy,
-        "title",
-        title_copy,
-        0
+    status = md_shared_status_from_html_builder(
+        html_builder_open_link(builder, href_copy, title_copy)
     );
     if (status != MARKDOWN_TRANSFORMER_OK) {
         free(href_copy);
@@ -68,7 +62,9 @@ MarkdownTransformerStatus md_inline_parse_link(
         return status;
     }
 
-    return md_shared_append_closing_tag(builder, "a");
+    return md_shared_status_from_html_builder(
+        html_builder_close_link(builder)
+    );
 }
 
 // Parses and renders a Markdown image.
@@ -84,7 +80,7 @@ MarkdownTransformerStatus md_inline_parse_image(
     char* src_copy;
     char* alt_copy;
     char* title_copy;
-    MarkdownTransformerStatus status;
+    HtmlBuilderStatus builder_status;
 
     src_copy = md_shared_copy_range(
         source_start,
@@ -116,45 +112,18 @@ MarkdownTransformerStatus md_inline_parse_image(
         }
     }
 
-    status = md_shared_append_open_tag_with_attrs(
+    builder_status = html_builder_append_image(
         builder,
-        "img",
-        "src",
         src_copy,
-        "alt",
         alt_copy,
-        0
+        title_copy
     );
-    if (status == MARKDOWN_TRANSFORMER_OK && title_copy != NULL) {
-        status = md_shared_append_raw_n(builder, " ", 1);
-        if (status == MARKDOWN_TRANSFORMER_OK) {
-            status = md_shared_append_raw_n(builder, "title", 5);
-        }
-        if (status == MARKDOWN_TRANSFORMER_OK) {
-            status = md_shared_append_raw_n(builder, "=\"", 2);
-        }
-        if (status == MARKDOWN_TRANSFORMER_OK) {
-            status = md_shared_status_from_html_builder(
-                html_builder_append_escaped(builder, title_copy)
-            );
-        }
-        if (status == MARKDOWN_TRANSFORMER_OK) {
-            status = md_shared_append_raw_n(builder, "\"", 1);
-        }
-        if (status == MARKDOWN_TRANSFORMER_OK) {
-            status = md_shared_append_raw_n(builder, ">", 1);
-        }
-    }
-
-    if (status == MARKDOWN_TRANSFORMER_OK && title_copy == NULL) {
-        status = md_shared_append_raw_n(builder, ">", 1);
-    }
 
     free(src_copy);
     free(alt_copy);
     free(title_copy);
 
-    return status;
+    return md_shared_status_from_html_builder(builder_status);
 }
 
 // Parses and renders an angle-bracket autolink.
@@ -166,7 +135,7 @@ MarkdownTransformerStatus md_inline_parse_autolink(
     const char* at_sign;
     char* content_copy;
     char* href_copy;
-    MarkdownTransformerStatus status;
+    HtmlBuilderStatus builder_status;
 
     content_copy = md_shared_copy_range(
         content_start,
@@ -204,36 +173,17 @@ MarkdownTransformerStatus md_inline_parse_autolink(
         }
     }
 
-    status = md_shared_append_open_tag_with_attrs(
+    builder_status = html_builder_append_link(
         builder,
-        "a",
-        "href",
         href_copy,
         NULL,
-        NULL,
-        0
+        content_copy
     );
-    if (status != MARKDOWN_TRANSFORMER_OK) {
-        free(content_copy);
-        free(href_copy);
-        return status;
-    }
-
-    status = md_shared_status_from_html_builder(
-        html_builder_append_escaped(builder, content_copy)
-    );
-    if (status != MARKDOWN_TRANSFORMER_OK) {
-        free(content_copy);
-        free(href_copy);
-        return status;
-    }
-
-    status = md_shared_append_closing_tag(builder, "a");
 
     free(content_copy);
     free(href_copy);
 
-    return status;
+    return md_shared_status_from_html_builder(builder_status);
 }
 
 // Parses a Markdown link destination and optional title.
