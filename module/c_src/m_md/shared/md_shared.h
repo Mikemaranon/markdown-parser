@@ -31,15 +31,17 @@ int md_shared_is_safe_url_char(char character);
 // Returns whether the provided character is a valid automatic URL boundary.
 int md_shared_is_auto_url_boundary(char character);
 
-// Finds the next unescaped occurrence of the provided delimiter.
+// Finds the next unescaped occurrence of the provided delimiter inside a range.
 const char* md_shared_find_closing_delimiter(
     const char* start,
+    const char* end,
     const char* delimiter
 );
 
-// Finds the next unescaped occurrence of the provided character.
+// Finds the next unescaped occurrence of the provided character inside a range.
 const char* md_shared_find_matching_char(
     const char* start,
+    const char* end,
     char target
 );
 

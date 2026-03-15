@@ -33,3 +33,11 @@ You can combine **bold text with *nested italic*** and also use [links with **in
 Another line with __bold__, `code`, and ==highlighted [text](https://example.com)== inside the same paragraph.
 
 Plain text should remain untouched, including dots, commas, and numbers like 12345.
+
+## Tables
+
+| Name | Role | Website |
+| --- | --- | --- |
+| Mike | **Engineer** | [OpenAI](https://openai.com) |
+| Ana | Designer | `example.org` |
+| Luis | ==QA== | <https://example.com> |

@@ -1,4 +1,5 @@
 #include "md_blocks.h"
+#include "md_table.h"
 
 #include "../inline/md_inline.h"
 #include "../shared/md_shared.h"
@@ -207,4 +208,34 @@ MarkdownTransformerStatus md_blocks_append_line_to_paragraph(
     }
 
     return MARKDOWN_TRANSFORMER_OK;
+}
+
+// Appends a raw HTML block line with the standard block indentation.
+MarkdownTransformerStatus md_blocks_append_raw_block_line(
+    HtmlBuilder* builder,
+    const char* content_start,
+    size_t content_length
+) {
+    HtmlBuilderStatus builder_status;
+
+    if (builder == NULL || content_start == NULL) {
+        return MARKDOWN_TRANSFORMER_ERROR_NULL_ARGUMENT;
+    }
+
+    builder_status = html_builder_append_indent(builder, 1);
+    if (builder_status != HTML_BUILDER_OK) {
+        return md_shared_status_from_html_builder(builder_status);
+    }
+
+    builder_status = html_builder_append_raw_n(
+        builder,
+        content_start,
+        content_length
+    );
+    if (builder_status != HTML_BUILDER_OK) {
+        return md_shared_status_from_html_builder(builder_status);
+    }
+
+    builder_status = html_builder_append_newline(builder);
+    return md_shared_status_from_html_builder(builder_status);
 }

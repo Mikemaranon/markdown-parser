@@ -118,15 +118,16 @@ int md_shared_is_auto_url_boundary(char character) {
     );
 }
 
-// Finds the next unescaped occurrence of the provided delimiter.
+// Finds the next unescaped occurrence of the provided delimiter inside a range.
 const char* md_shared_find_closing_delimiter(
     const char* start,
+    const char* end,
     const char* delimiter
 ) {
     size_t delimiter_length;
     const char* cursor;
 
-    if (start == NULL || delimiter == NULL) {
+    if (start == NULL || end == NULL || delimiter == NULL || end < start) {
         return NULL;
     }
 
@@ -136,13 +137,28 @@ const char* md_shared_find_closing_delimiter(
     }
 
     cursor = start;
-    while (*cursor != '\0') {
-        if (*cursor == '\\' && *(cursor + 1) != '\0') {
+    while (cursor < end) {
+        if (
+            *cursor == '\\' &&
+            (cursor + 1) < end
+        ) {
             cursor += 2;
             continue;
         }
 
-        if (strncmp(cursor, delimiter, delimiter_length) == 0) {
+        if (
+            (size_t)(end - cursor) >= delimiter_length &&
+            strncmp(cursor, delimiter, delimiter_length) == 0
+        ) {
+            if (
+                delimiter_length > 1 &&
+                (cursor + delimiter_length) < end &&
+                cursor[delimiter_length] == delimiter[0]
+            ) {
+                cursor++;
+                continue;
+            }
+
             return cursor;
         }
 
@@ -152,20 +168,24 @@ const char* md_shared_find_closing_delimiter(
     return NULL;
 }
 
-// Finds the next unescaped occurrence of the provided character.
+// Finds the next unescaped occurrence of the provided character inside a range.
 const char* md_shared_find_matching_char(
     const char* start,
+    const char* end,
     char target
 ) {
     const char* cursor;
 
-    if (start == NULL) {
+    if (start == NULL || end == NULL || end < start) {
         return NULL;
     }
 
     cursor = start;
-    while (*cursor != '\0') {
-        if (*cursor == '\\' && *(cursor + 1) != '\0') {
+    while (cursor < end) {
+        if (
+            *cursor == '\\' &&
+            (cursor + 1) < end
+        ) {
             cursor += 2;
             continue;
         }

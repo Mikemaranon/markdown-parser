@@ -68,7 +68,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 3) <= text_end && strncmp(cursor, "***", 3) == 0) {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 3, "***");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 3, text_end, "***");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -120,7 +120,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 3) <= text_end && strncmp(cursor, "___", 3) == 0) {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 3, "___");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 3, text_end, "___");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -172,7 +172,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 2) <= text_end && strncmp(cursor, "**", 2) == 0) {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, "**");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, text_end, "**");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -197,7 +197,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 2) <= text_end && strncmp(cursor, "__", 2) == 0) {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, "__");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, text_end, "__");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -222,7 +222,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 2) <= text_end && strncmp(cursor, "~~", 2) == 0) {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, "~~");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, text_end, "~~");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -247,7 +247,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 2) <= text_end && strncmp(cursor, "++", 2) == 0) {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, "++");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, text_end, "++");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -272,7 +272,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 2) <= text_end && strncmp(cursor, "==", 2) == 0) {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, "==");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, text_end, "==");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -297,7 +297,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 2) <= text_end && strncmp(cursor, "^^", 2) == 0) {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, "^^");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, text_end, "^^");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -322,7 +322,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 2) <= text_end && strncmp(cursor, "&&", 2) == 0) {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, "&&");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, text_end, "&&");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -347,7 +347,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 2) <= text_end && strncmp(cursor, "@@", 2) == 0) {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, "@@");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 2, text_end, "@@");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -377,7 +377,7 @@ MarkdownTransformerStatus md_inline_transform_range(
             delimiter_text[0] = *cursor;
             delimiter_text[1] = '\0';
 
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 1, delimiter_text);
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 1, text_end, delimiter_text);
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -402,7 +402,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if (*cursor == '`') {
-            closing_delimiter = md_shared_find_closing_delimiter(cursor + 1, "`");
+            closing_delimiter = md_shared_find_closing_delimiter(cursor + 1, text_end, "`");
 
             if (closing_delimiter != NULL && closing_delimiter < text_end) {
                 status = md_shared_flush_plain_text(builder, plain_start, cursor);
@@ -426,7 +426,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if ((cursor + 1) < text_end && cursor[0] == '!' && cursor[1] == '[') {
-            label_end = md_shared_find_matching_char(cursor + 2, ']');
+            label_end = md_shared_find_matching_char(cursor + 2, text_end, ']');
 
             if (
                 label_end != NULL &&
@@ -435,7 +435,7 @@ MarkdownTransformerStatus md_inline_transform_range(
                 label_end[1] == '('
             ) {
                 destination_open = label_end + 2;
-                destination_close = md_shared_find_matching_char(destination_open, ')');
+                destination_close = md_shared_find_matching_char(destination_open, text_end, ')');
 
                 if (
                     destination_close != NULL &&
@@ -475,7 +475,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if (*cursor == '[') {
-            label_end = md_shared_find_matching_char(cursor + 1, ']');
+            label_end = md_shared_find_matching_char(cursor + 1, text_end, ']');
 
             if (
                 label_end != NULL &&
@@ -484,7 +484,7 @@ MarkdownTransformerStatus md_inline_transform_range(
                 label_end[1] == '('
             ) {
                 destination_open = label_end + 2;
-                destination_close = md_shared_find_matching_char(destination_open, ')');
+                destination_close = md_shared_find_matching_char(destination_open, text_end, ')');
 
                 if (
                     destination_close != NULL &&
@@ -524,7 +524,7 @@ MarkdownTransformerStatus md_inline_transform_range(
         }
 
         if (*cursor == '<') {
-            const char* closing_angle = md_shared_find_matching_char(cursor + 1, '>');
+            const char* closing_angle = md_shared_find_matching_char(cursor + 1, text_end, '>');
 
             if (closing_angle != NULL && closing_angle < text_end) {
                 int is_autolink = 0;

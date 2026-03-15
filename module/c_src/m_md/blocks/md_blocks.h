@@ -43,4 +43,11 @@ MarkdownTransformerStatus md_blocks_append_line_to_paragraph(
     size_t line_length
 );
 
+// Appends a raw HTML block line with the standard block indentation.
+MarkdownTransformerStatus md_blocks_append_raw_block_line(
+    HtmlBuilder* builder,
+    const char* content_start,
+    size_t content_length
+);
+
 #endif // MD_BLOCKS_H
