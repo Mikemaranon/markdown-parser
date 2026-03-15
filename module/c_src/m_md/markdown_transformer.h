@@ -16,7 +16,6 @@ typedef enum MarkdownTransformerStatus {
 // [Parameters]
 //   - markdown_content: UTF-8 Markdown input
 //   - builder: HTML builder that receives the generated fragment
-//
 // [Returns]
 //   - MARKDOWN_TRANSFORMER_OK on success
 //   - error code otherwise

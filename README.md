@@ -1,4 +1,4 @@
-# Markdown Parser
+# MARKDOWN PARSER
 
 Official repository for the personal project `Markdown Parser`.
 
@@ -12,214 +12,145 @@ The current MVP already supports a complete execution cycle:
 - Python integration through a wrapper layer
 - shared test fixtures for both C and Python
 
-## Current architecture
+## Inline syntax scope
 
-The repository is currently organized around three clear areas:
+The inline parser is responsible only for **inline Markdown expressions** inside already detected block elements such as paragraphs, headings, list items, table cells, and blockquotes.
 
-```text
-markdown-parser/
-├── module/
-│   ├── c_src/
-│   │   ├── lib/
-│   │   │   └── markdown_parser.h
-│   │   ├── m_str/
-│   │   │   ├── string_buffer.c
-│   │   │   └── string_buffer.h
-│   │   ├── m_html/
-│   │   │   ├── html_builder.c
-│   │   │   └── html_builder.h
-│   │   ├── m_md/
-│   │   │   ├── markdown_transformer.c
-│   │   │   └── markdown_transformer.h
-│   │   ├── markdown_parser.c
-│   │   ├── libmarkdown_parser.dylib
-│   │   └── libmarkdown_parser.so
-│   └── python/
-│       ├── _native.py
-│       └── parser.py
-└── tests/
-    ├── c/
-    ├── python/
-    └── samples/
-```
+It does **not** create blocks by itself.
 
-## Project layers
+---
 
-### C core
+## Scope policy
 
-The native library is the real engine of the project.
+This project follows these rules for inline syntax design:
 
-Its responsibilities are:
+1. **Native Markdown syntax remains reserved for its original meaning**.
+2. **Any HTML-capable feature not covered by native Markdown may be introduced as a dialect extension**.
+3. **Dialect extensions must not reuse syntax that could naturally appear as a valid nested Markdown expression**.
+4. **All dialect extensions must be explicitly documented**.
 
-- manage parser state
-- store CSS content in the parser context
-- transform Markdown into HTML fragments
-- generate full HTML documents
-- keep the internal implementation modular and extensible
+This means:
 
-### Python wrapper
+- Native Markdown expressions such as `***text***` must preserve their compositional meaning.
+- Features such as underline, mark, subscript, or superscript must use **new delimiters** if they are added as dialect syntax.
+- Expressions derived from valid Markdown nesting must never be reassigned to custom meanings.
 
-The Python layer does not reimplement parsing logic.
+---
 
-Its job is only to:
+## Supported inline syntax
 
-- load the native shared library
-- expose a friendly public API
-- convert values between Python and C
-- manage native memory returned by the C library
+| Category | Markdown syntax | HTML output | Type | Notes |
+|---|---|---|---|---|
+| Plain text | `text` | escaped text | Native | Must escape HTML-sensitive characters |
+| Escape sequence | `\*`, `\_`, `\[`, `\]` | literal character | Native | Prevents Markdown interpretation |
+| Emphasis | `*text*` | `<em>text</em>` | Native | Inline nesting allowed |
+| Emphasis | `_text_` | `<em>text</em>` | Native | Standard Markdown behavior |
+| Strong | `**text**` | `<strong>text</strong>` | Native | Inline nesting allowed |
+| Strong | `__text__` | `<strong>text</strong>` | Native | Must keep original Markdown meaning |
+| Strong + emphasis | `***text***` | `<strong><em>text</em></strong>` | Native | Must remain compositional |
+| Strong + emphasis | `___text___` | `<strong><em>text</em></strong>` | Native | Must remain compositional |
+| Strikethrough | `~~text~~` | `<del>text</del>` | Native / GFM | Inline nesting allowed |
+| Inline code | `` `text` `` | `<code>text</code>` | Native | No nested parsing inside |
+| Link | `[text](url)` | `<a href="url">text</a>` | Native | Link text may contain inline syntax |
+| Link with title | `[text](url "title")` | `<a href="url" title="title">text</a>` | Native | Optional parsing detail |
+| Image | `![alt](src)` | `<img src="src" alt="alt">` | Native | `alt` is text content |
+| Image with title | `![alt](src "title")` | `<img src="src" alt="alt" title="title">` | Native | Optional parsing detail |
+| Autolink | `<https://example.com>` | `<a href="https://example.com">https://example.com</a>` | Native | Standard Markdown behavior |
+| Email autolink | `<user@example.com>` | `<a href="mailto:user@example.com">user@example.com</a>` | Native | Standard Markdown behavior |
+| Automatic URL | `https://example.com` | `<a href="https://example.com">https://example.com</a>` | Optional native-like | Requires boundary detection |
 
-### Shared tests
+---
 
-The repository uses shared fixtures under `tests/samples/` so both C and Python can validate the same real Markdown and CSS files.
+## Dialect extensions
 
-## Public Python API
+The following expressions are valid candidates for **custom dialect syntax**, because they map naturally to HTML but are not part of native Markdown inline syntax.
 
-The Python API is intentionally small and stable.
+Their delimiters must remain **exclusive to the dialect** and must not collide with Markdown-native nesting rules.
 
-The exposed object provides these methods:
+| Feature | Proposed syntax | HTML output | Type | Notes |
+|---|---|---|---|---|
+| Underline | `++text++` | `<u>text</u>` | Dialect | Recommended custom syntax |
+| Highlight | `==text==` | `<mark>text</mark>` | Dialect | Clear and readable |
+| Superscript | `^^text^^` | `<sup>text</sup>` | Dialect | Avoid single `^` ambiguity |
+| Subscript | `~~~text~~~` or another custom form | `<sub>text</sub>` | Dialect | Must avoid collision with strikethrough |
+| Keyboard input | `&&text&&` | `<kbd>text</kbd>` | Dialect | Possible extension |
+| Inserted text | `@@text@@` | `<ins>text</ins>` | Dialect | Possible extension |
 
-- `add_css(css_content)`
-- `clear_css()`
-- `transform(markdown_content)`
-- `to_html_document(markdown_content, title=None)`
-- `close()`
+---
 
-## Native C API
+## Context-dependent inline syntax
 
-The C public API is exposed through `module/c_src/lib/markdown_parser.h`.
+The following expressions are inline in appearance, but they require **external document context** and should not be resolved by a purely local inline function unless reference definitions are already available in the transformer context.
 
-Main functions:
+| Category | Markdown syntax | HTML output | Type | Notes |
+|---|---|---|---|---|
+| Reference link | `[text][id]` | `<a href="...">text</a>` | Native, context-dependent | Requires reference lookup |
+| Collapsed reference link | `[text][]` | `<a href="...">text</a>` | Native, context-dependent | Requires reference lookup |
+| Shortcut reference link | `[id]` | `<a href="...">id</a>` | Native, context-dependent | Requires reference lookup |
+| Reference image | `![alt][id]` | `<img ...>` | Native, context-dependent | Requires reference lookup |
 
-- `markdown_parser_create()`
-- `markdown_parser_destroy()`
-- `markdown_parser_set_css()`
-- `markdown_parser_clear_css()`
-- `markdown_parser_transform()`
-- `markdown_parser_to_html_document()`
-- `markdown_parser_free_string()`
+---
 
-## Current Markdown support
+## Parsing rules
 
-The current MVP supports:
+| Rule | Description |
+|---|---|
+| Left-to-right scan | The inline parser processes text from left to right |
+| HTML escaping | Plain text must always be HTML-escaped |
+| Escape precedence | Escaped characters are treated as literals |
+| Longest delimiter first | Multi-character delimiters must be checked before shorter ones |
+| Literal fallback | Unclosed or invalid expressions must remain as literal text |
+| Inline-only responsibility | The inline parser must not create paragraphs, headings, lists, or any block element |
+| Code isolation | Content inside inline code is not parsed recursively |
+| Controlled nesting | Native inline expressions may nest according to defined precedence rules |
+| Safe attributes | Attribute values such as `href`, `src`, `title`, and `alt` must be escaped safely |
+| Native syntax preservation | Native Markdown syntax must never be reassigned to custom meanings |
+| Dialect isolation | Custom syntax must use delimiters that cannot conflict with valid Markdown nesting |
 
-- headings from `#` to `######`
-- paragraphs
-- blank-line paragraph separation
-- HTML escaping for text content
+---
 
-## Build the native library
+## Explicitly out of scope for the inline parser
 
-Example build command for macOS:
+| Element | Reason |
+|---|---|
+| Headings | Block-level parsing responsibility |
+| Paragraphs | Block-level parsing responsibility |
+| Lists | Block-level parsing responsibility |
+| Tables | Block-level parsing responsibility |
+| Blockquotes | Block-level parsing responsibility |
+| Horizontal rules | Block-level parsing responsibility |
+| Fenced code blocks | Block-level parsing responsibility |
+| HTML blocks | Block-level parsing responsibility |
+| Footnotes | Require document-level structures |
+| Task list detection | Belongs to list/block parsing |
+| Reference definition declarations | Require document-level storage |
 
-```bash
-clang -dynamiclib \
-  -o module/c_src/libmarkdown_parser.dylib \
-  module/c_src/markdown_parser.c \
-  module/c_src/m_str/string_buffer.c \
-  module/c_src/m_html/html_builder.c \
-  module/c_src/m_md/markdown_transformer.c \
-  -I module/c_src/lib \
-  -I module/c_src/m_str \
-  -I module/c_src/m_html \
-  -I module/c_src/m_md
-```
+---
 
-## Run the tests
+## Recommended implementation split
 
-### C test
+| Responsibility | Suggested internal function |
+|---|---|
+| Flush plain text | `markdown_transformer_flush_plain_text` |
+| Escape handling | `markdown_transformer_parse_escape_sequence` |
+| Delimiter matching | `markdown_transformer_match_delimiter` |
+| Emphasis parsing | `markdown_transformer_parse_emphasis` |
+| Inline code parsing | `markdown_transformer_parse_code_span` |
+| Link parsing | `markdown_transformer_parse_link` |
+| Image parsing | `markdown_transformer_parse_image` |
+| Autolink parsing | `markdown_transformer_parse_autolink` |
+| Automatic URL parsing | `markdown_transformer_parse_auto_url` |
+| Recursive range parsing | `markdown_transformer_parse_inline_range` |
 
-Compile from the repository root:
+---
 
-```bash
-clang \
-  -o tests/c/markdown_parser_test \
-  tests/c/test_main.c \
-  module/c_src/markdown_parser.c \
-  module/c_src/m_str/string_buffer.c \
-  module/c_src/m_html/html_builder.c \
-  module/c_src/m_md/markdown_transformer.c \
-  -I module/c_src \
-  -I module/c_src/lib \
-  -I module/c_src/m_str \
-  -I module/c_src/m_html \
-  -I module/c_src/m_md
-```
+## Final contract
 
-Then run:
+The inline parser should be designed as a **closed-scope component** whose responsibility is:
 
-```bash
-./tests/c/markdown_parser_test
-```
-
-### Python test
-
-Run from the repository root:
-
-```bash
-python3 tests/python/test_parser.py
-```
-
-## Example Python usage
-
-```python
-from parser import MarkdownParser
-
-markdown_content = """# Main Title
-
-This is a paragraph.
-"""
-
-css_content = """body { font-family: Arial, sans-serif; }
-h1 { color: #1f4b99; }
-"""
-
-parser = MarkdownParser()
-
-try:
-    parser.add_css(css_content)
-
-    html_fragment = parser.transform(markdown_content)
-    html_document = parser.to_html_document(
-        markdown_content,
-        title="Example Document",
-    )
-
-    print(html_fragment)
-    print(html_document)
-finally:
-    parser.close()
-```
-
-## Design goals
-
-This project is being developed with these goals in mind:
-
-- modular C architecture
-- minimal dependencies
-- clean public API
-- future extensibility
-- stable Python usage over an evolving native core
-
-## Roadmap
-
-Planned next steps include:
-
-- inline formatting support
-- stronger HTML formatting control
-- lists
-- tables
-- links
-- code blocks
-- Linux shared library support
-- packaging improvements for Python usage
-
-## Status
-
-The project already has a functional MVP with:
-
-- working native C parser
-- working Python wrapper
-- shared test inputs
-- real end-to-end execution
-
-The next phase is focused on expanding Markdown support while keeping the public API stable.
+- parsing self-contained inline Markdown expressions
+- preserving native Markdown semantics
+- supporting clearly separated dialect extensions
+- escaping plain text safely
+- appending valid HTML to the builder
+- delegating context-dependent features to the transformer layer when external lookup is required
